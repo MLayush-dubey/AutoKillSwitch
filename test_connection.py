@@ -76,13 +76,6 @@ def main():
     except Exception as exc:
         print(f"  ERROR: {exc}")
 
-    print("\n[6] Checking kill switch status...")
-    try:
-        ks_status = client.get_kill_switch_status()
-        pretty("Kill Switch Status", ks_status)
-    except Exception as exc:
-        print(f"  ERROR: {exc}")
-
     print("\n=== Connection test complete ===\n")
 
 

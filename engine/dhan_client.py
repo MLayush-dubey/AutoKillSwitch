@@ -11,12 +11,45 @@ logger = logging.getLogger(__name__)
 
 
 class DhanClient:
-    def __init__(self):
+    def __init__(self, use_proxy: bool = False):
         client_id = os.environ["DHAN_CLIENT_ID"]
         access_token = os.environ["DHAN_ACCESS_TOKEN"]
+
+        if use_proxy:
+            self._configure_proxy()
+        else:
+            logger.info("Proxy disabled — using direct connection")
+
         # dhanhq v2.0.x constructor: dhanhq(client_id, access_token)
         self._dhan = dhanhq(client_id, access_token)
         logger.info("DhanClient initialised (client_id=%s)", client_id)
+
+    @staticmethod
+    def _configure_proxy():
+        """
+        Configure HTTP(S)_PROXY env vars for the requests library.
+        The dhanhq SDK uses `requests` internally and respects these vars.
+        Never log the full proxy URL — it contains credentials.
+        """
+        user = os.environ.get("BRD_PROXY_USER")
+        password = os.environ.get("BRD_PROXY_PASS")
+        host = os.environ.get("BRD_PROXY_HOST", "brd.superproxy.io")
+        port = os.environ.get("BRD_PROXY_PORT", "33335")
+
+        if not user or not password:
+            logger.error(
+                "Proxy enabled in config but BRD_PROXY_USER / BRD_PROXY_PASS "
+                "are missing in .env. Bailing out for safety."
+            )
+            raise RuntimeError("Proxy enabled but credentials missing")
+
+        proxy_url = f"http://{user}:{password}@{host}:{port}"
+        os.environ["HTTP_PROXY"] = proxy_url
+        os.environ["HTTPS_PROXY"] = proxy_url
+        os.environ["http_proxy"] = proxy_url
+        os.environ["https_proxy"] = proxy_url
+
+        logger.info("Proxy configured: %s:%s (credentials masked)", host, port)
 
     # ------------------------------------------------------------------
     # Account
@@ -94,5 +127,3 @@ class DhanClient:
         """Activate Dhan killswitch. Requires zero positions & no pending orders."""
         return self._dhan.kill_switch("ACTIVATE")
 
-    def get_kill_switch_status(self) -> dict:
-        return self._dhan.kill_switch("GET_STATUS")

@@ -29,3 +29,7 @@ notifications:
 logging:
   log_dir: "logs"
   format: "ndjson"         # Newline-delimited JSON per day: YYYY-MM-DD.json
+
+proxy:
+  enabled: false         # Set true in Phase B when second Bright Data zone is ready
+  provider: brightdata   # Only brightdata supported for now

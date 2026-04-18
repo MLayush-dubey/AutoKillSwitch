@@ -66,7 +66,8 @@ def main():
     from engine.rules import RuleEngine
     from notifications import build_notifiers
 
-    client = DhanClient()
+    use_proxy = config.get("proxy", {}).get("enabled", False)
+    client = DhanClient(use_proxy=use_proxy)
     rule_engine = RuleEngine(config["rules"])
     executor = Executor(client, dry_run=dry_run)
     notifiers = build_notifiers(config)
