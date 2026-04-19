@@ -1,0 +1,138 @@
+// AutoKillSwitch — Prisma schema
+// Week 1: foundation. SQLite for local dev; swap provider to postgresql
+// for production (and re-run `prisma migrate dev` against Postgres).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ───── NextAuth (v5) core tables ───────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          String    @default("user") // "user" | "admin"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  subscription     Subscription?
+  rules            Rules?
+  brokerConnection BrokerConnection?
+  triggers         Trigger[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ───── Product tables ──────────────────────────────────────────
+
+model Subscription {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  plan                   String   @default("MONTHLY") // MONTHLY | QUARTERLY | HALF_YEARLY | ANNUAL
+  status                 String   @default("trialing") // trialing | active | past_due | canceled
+  currentPeriodStart     DateTime @default(now())
+  currentPeriodEnd       DateTime
+  razorpaySubscriptionId String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Rules {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  maxDailyLoss          Int      @default(5000)   // rupees; stored positive, interpreted as cap
+  maxDailyProfit        Int      @default(10000)
+  maxTrades             Int      @default(20)
+  warningThresholdPct   Int      @default(80)
+  telegramWarnings      Boolean  @default(false)
+  timeBasedExit         String?  // "HH:mm"
+  perTradeLossLimit     Int?
+  consecutiveLossLimit  Int?
+  updatedAt             DateTime @updatedAt
+  createdAt             DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BrokerConnection {
+  id                      String    @id @default(cuid())
+  userId                  String    @unique
+  broker                  String    @default("dhan")
+  clientId                String?
+  // Tokens stored encrypted in real build; plaintext fields omitted here by design.
+  accessTokenCiphertext   String?
+  apiKeyCiphertext        String?
+  apiSecretCiphertext     String?
+  tokenExpiresAt          DateTime?
+  staticIp                String?
+  isActive                Boolean   @default(false)
+  lastCheckedAt           DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Trigger {
+  id                  String   @id @default(cuid())
+  userId              String
+  triggeredAt         DateTime
+  reason              String   // MAX_LOSS | MAX_PROFIT | MAX_TRADES | TIME_BASED
+  pnlAtTrigger        Int      // rupees, signed
+  tradeCountAtTrigger Int
+  ordersCancelled     Int      @default(0)
+  positionsFlattened  Int      @default(0)
+  eventsJson          String   // JSON-serialised timeline of events
+  notes               String?
+  createdAt           DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, triggeredAt])
+}
