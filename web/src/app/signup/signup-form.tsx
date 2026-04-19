@@ -43,7 +43,7 @@ export function SignupForm() {
       setError("Account created but sign-in failed. Try logging in.");
       return;
     }
-    router.push("/app");
+    router.push("/app/onboarding");
     router.refresh();
   }
 

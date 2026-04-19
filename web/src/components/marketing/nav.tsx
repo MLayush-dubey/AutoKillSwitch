@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MobileNav } from "./mobile-nav";
 
 const links = [
   { href: "/#features", label: "Features" },
@@ -30,7 +31,7 @@ export function MarketingNav() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 md:flex">
           <Button asChild variant="ghost" size="sm">
             <Link href="/login">Log in</Link>
           </Button>
@@ -38,6 +39,7 @@ export function MarketingNav() {
             <Link href="/signup">Start for ₹666/mo</Link>
           </Button>
         </div>
+        <MobileNav />
       </div>
     </header>
   );
