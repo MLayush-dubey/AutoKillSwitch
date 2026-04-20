@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { sendWelcome } from "@/lib/emails";
 
 const schema = z.object({
   name: z.string().min(1).max(80),
@@ -37,6 +38,9 @@ export async function POST(req: Request) {
       rules: { create: {} },
     },
   });
+
+  // Welcome email is non-blocking — failure shouldn't fail the signup.
+  sendWelcome({ to: user.email, name: user.name ?? "there" }).catch(() => null);
 
   return NextResponse.json({ id: user.id }, { status: 201 });
 }

@@ -11,10 +11,11 @@ import {
   Settings,
   LifeBuoy,
   ShieldCheck,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const items = [
+const baseItems = [
   { href: "/app", label: "Overview", icon: LayoutDashboard },
   { href: "/app/rules", label: "Rules", icon: SlidersHorizontal },
   { href: "/app/history", label: "History", icon: History },
@@ -24,8 +25,11 @@ const items = [
   { href: "/app/support", label: "Support", icon: LifeBuoy },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  const items = isAdmin
+    ? [...baseItems, { href: "/app/admin", label: "Admin", icon: Shield }]
+    : baseItems;
 
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-card/40 md:flex">

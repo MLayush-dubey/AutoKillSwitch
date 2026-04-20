@@ -28,7 +28,19 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${display.variable} ${code.variable} dark`}>
+    <html
+      lang="en"
+      className={`${display.variable} ${code.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Apply theme before first paint to prevent a flash of the wrong mode. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('aks-theme')||'dark';var d=document.documentElement;if(t==='system'){d.classList.toggle('dark',window.matchMedia('(prefers-color-scheme: dark)').matches);}else{d.classList.toggle('dark',t==='dark');}}catch(e){document.documentElement.classList.add('dark');}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Providers>{children}</Providers>
       </body>

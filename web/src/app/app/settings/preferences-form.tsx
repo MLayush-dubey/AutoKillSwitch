@@ -27,6 +27,11 @@ export function PreferencesForm({
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         root.classList.toggle("dark", prefersDark);
       }
+      try {
+        localStorage.setItem("aks-theme", v);
+      } catch {
+        // localStorage can be blocked in incognito; theme still applies for the session.
+      }
     }
     // Persist server-side silently; failure is non-fatal for a preference.
     fetch("/api/settings/profile", {
