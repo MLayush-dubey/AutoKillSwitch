@@ -1,35 +1,36 @@
 rules:
-  max_loss: -5000          # Trigger killswitch if P&L drops below this (INR)
-  max_profit: 10000        # Trigger killswitch if P&L exceeds this (INR)
-  max_trades: 10           # Trigger killswitch if TRADED order count hits this
+  max_loss: -30 # Trigger killswitch if P&L drops below this (INR)
+  max_profit: 30 # Trigger killswitch if P&L exceeds this (INR)
+  max_trades: 3 # Trigger killswitch if TRADED order count hits this
 
   # Warning thresholds (80% of limits — notify but don't trigger)
-  warn_loss_pct: 0.80      # Warn at 80% of max_loss
-  warn_profit_pct: 0.80    # Warn at 80% of max_profit
-  warn_trades_pct: 0.80    # Warn at 80% of max_trades
+  warn_loss_pct: 0.80 # Warn at 80% of max_loss
+  warn_profit_pct: 0.80 # Warn at 80% of max_profit
+  warn_trades_pct: 0.80 # Warn at 80% of max_trades
 
-  warn_cooldown_seconds: 300  # Deduplicate warnings — max 1 per rule per 5 min
+  warn_cooldown_seconds: 300 # Deduplicate warnings — max 1 per rule per 5 min
 
 monitoring:
-  poll_interval: 10        # Seconds between each check
-  market_open: "09:15"     # IST
-  market_close: "15:30"    # IST
+  poll_interval: 5 # Seconds between each check
+  market_open: "09:15" # IST
+  market_close: "15:30" # IST
   timezone: "Asia/Kolkata"
 
 safety:
-  dry_run: true            # Set to false to enable live order cancellation / killswitch
+  dry_run: false # Set to false to enable live order cancellation / killswitch
 
 notifications:
   console: true
   telegram:
     enabled: false
-    bot_token: ""          # Set via env: TELEGRAM_BOT_TOKEN
-    chat_id: ""            # Set via env: TELEGRAM_CHAT_ID
+    bot_token: "" # Set via env: TELEGRAM_BOT_TOKEN
+    chat_id: "" # Set via env: TELEGRAM_CHAT_ID
 
 logging:
   log_dir: "logs"
-  format: "ndjson"         # Newline-delimited JSON per day: YYYY-MM-DD.json
+  format: "ndjson" # Newline-delimited JSON per day: YYYY-MM-DD.json
 
 proxy:
-  enabled: false         # Set true in Phase B when second Bright Data zone is ready
-  provider: brightdata   # Only brightdata supported for now
+  # Production: must be true. Direct connection causes DH-905.
+  enabled: true
+  provider: brightdata # Only brightdata supported for now

@@ -112,14 +112,21 @@ class Monitor:
                 logger.warning("TRIGGER: %s", result.message)
                 self._notify(f"TRIGGER: {result.message}\nStarting kill-switch sequence...")
 
-                success = self._executor.execute_killswitch_sequence()
-                log_entry["kill_switch_success"] = success
+                ks_result = self._executor.execute_killswitch_sequence()
+                log_entry["kill_switch_result"] = ks_result
+                # Backwards-compat key: True only if everything was fully automated.
+                kill_switch_success = ks_result.get("fully_automated", False)
+                log_entry["kill_switch_success"] = kill_switch_success
                 self._triggered = True
 
-                if success:
+                if kill_switch_success:
                     self._notify("Kill switch sequence completed. Monitor stopped for today.")
                 else:
-                    self._notify("Kill switch sequence FAILED. Manual intervention required!")
+                    logger.warning(
+                        "Kill switch sequence completed but fully_automated=False — "
+                        "manual intervention may have been required. result=%s", ks_result
+                    )
+                    self._notify("Kill switch sequence FAILED or required manual intervention!")
 
         except Exception as exc:
             logger.exception("Error in poll cycle: %s", exc)

@@ -206,7 +206,8 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-
+C:\Users\aaadu\OneDrive\Documents\AutoKillSwitch\AutoKillSwitch\.env.example
+implement.md
 # Marimo
 marimo/_static/
 marimo/_lsp/
