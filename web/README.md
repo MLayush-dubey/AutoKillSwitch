@@ -34,12 +34,12 @@ Promote the demo user (or any user) to admin to unlock `/app/admin`:
 npx tsx --env-file=.env scripts/promote.ts demo@autokillswitch.in
 ```
 
-## What's built (Weeks 1–4)
+## What's built (Phases 1–4)
 
-- **Week 1** — auth, Prisma schema, demo seed, layouts.
-- **Week 2** — landing page, pricing, FAQ, legal pages, contact form.
-- **Week 3** — dashboard overview, rules, history, broker, onboarding, settings.
-- **Week 4** — billing + plan change (Razorpay mock), transactional emails
+- **Phase 1** — auth, Prisma schema, demo seed, layouts.
+- **Phase 2** — landing page, pricing, FAQ, legal pages, contact form.
+- **Phase 3** — dashboard overview, rules, history, broker, onboarding, settings.
+- **Phase 4** — billing + plan change (Razorpay mock), transactional emails
   (welcome, password reset, trigger alerts, weekly summary, plan change),
   admin panel, theme persistence (dark / light / system).
 
