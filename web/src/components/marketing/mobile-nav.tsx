@@ -28,7 +28,7 @@ export function MobileNav() {
       </Button>
 
       {open && (
-        <div className="fixed inset-x-0 top-16 z-30 border-b border-border bg-background/95 backdrop-blur">
+        <div className="fixed inset-x-0 top-16 z-30 border-b border-border bg-background">
           <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-6 py-4">
             {links.map((l) => (
               <Link

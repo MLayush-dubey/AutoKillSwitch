@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   Area,
   AreaChart,
@@ -19,7 +20,7 @@ export type DailyPnl = {
   triggered: boolean;
 };
 
-export function PnlChart({ data }: { data: DailyPnl[] }) {
+function PnlChartImpl({ data }: { data: DailyPnl[] }) {
   const hasNegative = data.some((d) => d.pnl < 0);
 
   return (
@@ -87,9 +88,28 @@ export function PnlChart({ data }: { data: DailyPnl[] }) {
             stroke="var(--profit)"
             strokeWidth={2}
             fill="url(#pnlPositive)"
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
     </div>
   );
 }
+
+// Parent (server component) hands us a fresh `data` array on every navigation.
+// Cheap structural compare — length + last point + any trigger flag changes —
+// keeps the chart from re-rendering when the data is logically the same.
+export const PnlChart = memo(PnlChartImpl, (prev, next) => {
+  if (prev.data === next.data) return true;
+  if (prev.data.length !== next.data.length) return false;
+  const a = prev.data[prev.data.length - 1];
+  const b = next.data[next.data.length - 1];
+  if (!a || !b) return false;
+  if (a.iso !== b.iso || a.pnl !== b.pnl || a.triggered !== b.triggered) return false;
+  // Spot-check the first point too — protects against a full shift while
+  // length stays equal.
+  const a0 = prev.data[0];
+  const b0 = next.data[0];
+  if (a0.iso !== b0.iso || a0.pnl !== b0.pnl) return false;
+  return true;
+});

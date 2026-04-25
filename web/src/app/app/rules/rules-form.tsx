@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -49,9 +49,40 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
     };
   }, [values]);
 
-  function update<K extends keyof RulesInput>(key: K, v: RulesInput[K]) {
-    setValues((prev) => ({ ...prev, [key]: v }));
-  }
+  const setMaxDailyLoss = useCallback(
+    (v: number) => setValues((prev) => ({ ...prev, maxDailyLoss: v })),
+    []
+  );
+  const setMaxDailyProfit = useCallback(
+    (v: number) => setValues((prev) => ({ ...prev, maxDailyProfit: v })),
+    []
+  );
+  const setMaxTrades = useCallback(
+    (v: number) => setValues((prev) => ({ ...prev, maxTrades: v })),
+    []
+  );
+  const setWarningThresholdPct = useCallback(
+    (v: number) => setValues((prev) => ({ ...prev, warningThresholdPct: v })),
+    []
+  );
+  const setTelegramWarnings = useCallback(
+    (v: boolean) => setValues((prev) => ({ ...prev, telegramWarnings: v })),
+    []
+  );
+  const setTimeBasedExit = useCallback(
+    (v: string | null) => setValues((prev) => ({ ...prev, timeBasedExit: v })),
+    []
+  );
+  const setPerTradeLossLimit = useCallback(
+    (v: number | null) => setValues((prev) => ({ ...prev, perTradeLossLimit: v })),
+    []
+  );
+  const setConsecutiveLossLimit = useCallback(
+    (v: number | null) => setValues((prev) => ({ ...prev, consecutiveLossLimit: v })),
+    []
+  );
+  const toggleAdvanced = useCallback(() => setShowAdvanced((v) => !v), []);
+  const resetDefaults = useCallback(() => setValues(defaultRules), []);
 
   return (
     <div className="space-y-6">
@@ -70,7 +101,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
             label="Max daily loss"
             value={values.maxDailyLoss}
             display={`-${formatINR(values.maxDailyLoss)}`}
-            onChange={(v) => update("maxDailyLoss", v)}
+            onChange={setMaxDailyLoss}
             min={100}
             max={50_000}
             step={100}
@@ -80,7 +111,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
             label="Max daily profit"
             value={values.maxDailyProfit}
             display={`+${formatINR(values.maxDailyProfit)}`}
-            onChange={(v) => update("maxDailyProfit", v)}
+            onChange={setMaxDailyProfit}
             min={100}
             max={100_000}
             step={100}
@@ -90,7 +121,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
             label="Max trades per day"
             value={values.maxTrades}
             display={`${values.maxTrades} trades`}
-            onChange={(v) => update("maxTrades", v)}
+            onChange={setMaxTrades}
             min={1}
             max={100}
             step={1}
@@ -110,7 +141,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
             label="Warn at % of each limit"
             value={values.warningThresholdPct}
             display={`${values.warningThresholdPct}%`}
-            onChange={(v) => update("warningThresholdPct", v)}
+            onChange={setWarningThresholdPct}
             min={50}
             max={99}
             step={1}
@@ -124,7 +155,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
             </div>
             <Switch
               checked={values.telegramWarnings}
-              onCheckedChange={(v) => update("telegramWarnings", v)}
+              onCheckedChange={setTelegramWarnings}
             />
           </div>
         </CardContent>
@@ -133,7 +164,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
       <Card>
         <CardHeader
           className="cursor-pointer select-none"
-          onClick={() => setShowAdvanced((v) => !v)}
+          onClick={toggleAdvanced}
         >
           <div className="flex items-center justify-between">
             <div>
@@ -156,9 +187,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
                 id="tbe"
                 type="time"
                 value={values.timeBasedExit ?? ""}
-                onChange={(e) =>
-                  update("timeBasedExit", e.target.value || null)
-                }
+                onChange={(e) => setTimeBasedExit(e.target.value || null)}
                 className="max-w-[160px]"
               />
               <p className="text-xs text-muted-foreground">
@@ -174,8 +203,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
                 max={50000}
                 value={values.perTradeLossLimit ?? ""}
                 onChange={(e) =>
-                  update(
-                    "perTradeLossLimit",
+                  setPerTradeLossLimit(
                     e.target.value ? Number(e.target.value) : null
                   )
                 }
@@ -191,8 +219,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
                 max={20}
                 value={values.consecutiveLossLimit ?? ""}
                 onChange={(e) =>
-                  update(
-                    "consecutiveLossLimit",
+                  setConsecutiveLossLimit(
                     e.target.value ? Number(e.target.value) : null
                   )
                 }
@@ -207,7 +234,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setValues(defaultRules)}
+          onClick={resetDefaults}
         >
           Reset to defaults
         </Button>
@@ -216,16 +243,7 @@ export function RulesForm({ initial }: { initial: RulesInput }) {
   );
 }
 
-function SliderRow({
-  label,
-  value,
-  display,
-  onChange,
-  min,
-  max,
-  step,
-  accent,
-}: {
+type SliderRowProps = {
   label: string;
   value: number;
   display: string;
@@ -234,13 +252,29 @@ function SliderRow({
   max: number;
   step: number;
   accent?: "profit" | "loss";
-}) {
+};
+
+const SliderRow = memo(function SliderRow({
+  label,
+  value,
+  display,
+  onChange,
+  min,
+  max,
+  step,
+  accent,
+}: SliderRowProps) {
   const color =
     accent === "profit"
       ? "text-[color:var(--profit)]"
       : accent === "loss"
         ? "text-[color:var(--loss)]"
         : "text-foreground";
+
+  const handleValueChange = useCallback(
+    ([v]: number[]) => onChange(v),
+    [onChange]
+  );
 
   return (
     <div className="space-y-3">
@@ -252,7 +286,7 @@ function SliderRow({
       </div>
       <Slider
         value={[value]}
-        onValueChange={([v]) => onChange(v)}
+        onValueChange={handleValueChange}
         min={min}
         max={max}
         step={step}
@@ -263,31 +297,35 @@ function SliderRow({
       </div>
     </div>
   );
-}
+});
 
-function SaveIndicator({
+const SaveIndicator = memo(function SaveIndicator({
   state,
   savedAt,
 }: {
   state: SaveState;
   savedAt: Date | null;
 }) {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const i = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(i);
-  }, []);
-
   let text = "Changes save automatically";
   let tone = "text-muted-foreground";
+  let showCheck = false;
 
   if (state === "saving") {
     text = "Saving…";
   } else if (state === "saved" && savedAt) {
-    const secs = Math.max(0, Math.floor((Date.now() - savedAt.getTime()) / 1000));
-    text =
-      secs < 2 ? "Saved just now" : `Saved ${secs} second${secs === 1 ? "" : "s"} ago`;
     tone = "text-[color:var(--profit)]";
+    showCheck = true;
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs",
+          tone
+        )}
+      >
+        <Check className="h-3.5 w-3.5" />
+        <SavedAgo savedAt={savedAt} />
+      </div>
+    );
   } else if (state === "error") {
     text = "Couldn't save — check your connection";
     tone = "text-destructive";
@@ -295,14 +333,25 @@ function SaveIndicator({
 
   return (
     <div
-      key={tick}
       className={cn(
         "flex items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs",
         tone
       )}
     >
-      {state === "saved" && <Check className="h-3.5 w-3.5" />}
+      {showCheck && <Check className="h-3.5 w-3.5" />}
       {text}
     </div>
   );
+});
+
+function SavedAgo({ savedAt }: { savedAt: Date }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
+  const secs = Math.max(0, Math.floor((now - savedAt.getTime()) / 1000));
+  const text =
+    secs < 2 ? "Saved just now" : `Saved ${secs} second${secs === 1 ? "" : "s"} ago`;
+  return <span>{text}</span>;
 }

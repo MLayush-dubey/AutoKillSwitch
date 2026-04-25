@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatINR } from "@/lib/utils";
-import { formatDuration, getMarketStatus } from "@/lib/market";
+import { formatDuration, getMarketStatus, type MarketStatus } from "@/lib/market";
 
 type Props = {
   maxDailyLoss: number;
@@ -14,6 +14,15 @@ type Props = {
   seedTrades: number;
 };
 
+function sameMarket(a: MarketStatus, b: MarketStatus): boolean {
+  if (a.state !== b.state) return false;
+  if (a.state === "open" && b.state === "open")
+    return a.minutesToClose === b.minutesToClose;
+  if (a.state !== "open" && b.state !== "open")
+    return a.minutesToOpen === b.minutesToOpen;
+  return false;
+}
+
 export function LiveStatusCards({
   maxDailyLoss,
   maxDailyProfit,
@@ -23,31 +32,59 @@ export function LiveStatusCards({
 }: Props) {
   const [pnl, setPnl] = useState(seedPnl);
   const [trades, setTrades] = useState(seedTrades);
-  const [market, setMarket] = useState(getMarketStatus());
-  const [tick, setTick] = useState(0);
+  const [market, setMarket] = useState<MarketStatus>(getMarketStatus());
+  const marketRef = useRef(market);
+  marketRef.current = market;
 
   useEffect(() => {
-    const i = setInterval(() => {
-      setMarket(getMarketStatus());
-      setTick((t) => t + 1);
-    }, 1000);
-    return () => clearInterval(i);
-  }, []);
+    let counter = 0;
+    let cancelled = false;
 
-  useEffect(() => {
-    if (market.state !== "open") return;
-    const i = setInterval(() => {
-      // Deterministic-feeling drift: bias slightly positive, occasional trade
-      setPnl((p) => {
-        const drift = Math.round((Math.random() - 0.48) * 75);
-        const next = p + drift;
-        // clamp so we don't visually trip the limits
-        return Math.max(-maxDailyLoss + 500, Math.min(maxDailyProfit - 500, next));
-      });
-      if (Math.random() < 0.12) setTrades((t) => Math.min(maxTrades - 2, t + 1));
-    }, 2500);
-    return () => clearInterval(i);
-  }, [market.state, maxDailyLoss, maxDailyProfit, maxTrades]);
+    const tick = () => {
+      if (cancelled) return;
+      // Pause everything when the tab is hidden — saves CPU and avoids
+      // throttled-timer jank when the user comes back.
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
+      counter += 1;
+
+      // Market clock only ticks at minute resolution; only push a new state
+      // when the value would visibly change.
+      const next = getMarketStatus();
+      if (!sameMarket(marketRef.current, next)) {
+        setMarket(next);
+      }
+
+      // Drift the simulated P&L every ~2.5s, only while market is open.
+      if (counter % 3 === 0 && marketRef.current.state === "open") {
+        setPnl((p) => {
+          const drift = Math.round((Math.random() - 0.48) * 75);
+          const np = p + drift;
+          return Math.max(-maxDailyLoss + 500, Math.min(maxDailyProfit - 500, np));
+        });
+        if (Math.random() < 0.12) {
+          setTrades((t) => Math.min(maxTrades - 2, t + 1));
+        }
+      }
+    };
+
+    const i = setInterval(tick, 1000);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        const next = getMarketStatus();
+        if (!sameMarket(marketRef.current, next)) setMarket(next);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      cancelled = true;
+      clearInterval(i);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [maxDailyLoss, maxDailyProfit, maxTrades]);
 
   const pnlColor =
     pnl > 0
@@ -102,8 +139,6 @@ export function LiveStatusCards({
           {market.state === "open"
             ? `Monitoring · market closes in ${formatDuration(market.minutesToClose)}`
             : `Market opens in ${formatDuration(market.minutesToOpen)}`}
-          {/* tick keeps "X minutes ago" live even without state change */}
-          <span className="hidden">{tick}</span>
         </CardContent>
       </Card>
 

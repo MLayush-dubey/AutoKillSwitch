@@ -16,7 +16,7 @@ export default async function AppLayout({
     <div className="flex min-h-screen">
       <AppSidebar isAdmin={session.user.role === "admin"} />
       <div className="flex flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-border bg-background/60 px-6 backdrop-blur">
+        <header className="flex h-16 items-center justify-between border-b border-border bg-background/95 px-6">
           <div className="text-sm text-muted-foreground">
             Market{" "}
             <span className="font-medium text-foreground">closed</span> ·

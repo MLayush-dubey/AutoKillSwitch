@@ -12,7 +12,7 @@ const links = [
 
 export function MarketingNav() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <ShieldCheck className="h-5 w-5 text-[color:var(--brand-emerald)]" />

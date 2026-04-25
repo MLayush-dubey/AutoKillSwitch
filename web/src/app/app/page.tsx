@@ -21,12 +21,19 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/login");
 
   const [user, rules, triggers] = await Promise.all([
-    prisma.user.findUnique({ where: { id: session.user.id } }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { onboardedAt: true },
+    }),
     prisma.rules.findUnique({ where: { userId: session.user.id } }),
     prisma.trigger.findMany({
       where: { userId: session.user.id },
       orderBy: { triggeredAt: "desc" },
       take: 30,
+      select: {
+        triggeredAt: true,
+        pnlAtTrigger: true,
+      },
     }),
   ]);
 
